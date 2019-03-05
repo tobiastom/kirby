@@ -24,7 +24,9 @@ Api.config.onStart = () => {
 };
 
 Api.config.onComplete = () => {
-  store.dispatch("isLoading", false);
+  if (Api.running === 0) {
+    store.dispatch("isLoading", false);
+  }
 };
 
 Api.config.onError = error => {
