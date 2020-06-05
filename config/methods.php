@@ -8,8 +8,7 @@ use Kirby\Cms\Html;
 use Kirby\Cms\Page;
 use Kirby\Cms\Structure;
 use Kirby\Cms\Url;
-use Kirby\Data\Json;
-use Kirby\Data\Yaml;
+use Kirby\Data\Data;
 use Kirby\Exception\Exception;
 use Kirby\Exception\InvalidArgumentException;
 use Kirby\Toolkit\Str;
@@ -65,11 +64,14 @@ return function (App $app) {
          * @return array
          */
         'toData' => function (Field $field, string $method = ',') {
+            if (is_array($field->value) === true) {
+                return $field->value;
+            }
+
             switch ($method) {
                 case 'yaml':
-                    return Yaml::decode($field->value);
                 case 'json':
-                    return Json::decode($field->value);
+                    return Data::decode($field->value, $method);
                 default:
                     return $field->split($method);
             }
@@ -216,7 +218,13 @@ return function (App $app) {
          */
         'toStructure' => function (Field $field) {
             try {
-                return new Structure(Yaml::decode($field->value), $field->parent());
+                $value = $field->value;
+
+                if (is_array($value) !== true) {
+                    $value = Data::decode($value, 'yaml');
+                }
+
+                return new Structure($value, $field->parent());
             } catch (Exception $e) {
                 if ($field->parent() === null) {
                     $message = 'Invalid structure data for "' . $field->key() . '" field';
